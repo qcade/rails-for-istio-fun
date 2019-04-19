@@ -1,0 +1,17 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: grafana
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: "grafana.sfo.mosel.ro"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: da-watcher-grafana
+              servicePort: service
+
