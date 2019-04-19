@@ -1,0 +1,49 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: za-app
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        run: za-app
+    spec:
+      containers:
+        - name: za-app
+          image: "itnovate/rails-for-istio-fun:production"
+          env:
+            - name: RAILS_SERVE_STATIC_FILES
+              value: "true"
+            - name: RAILS_ENV
+              value: "production"
+          envFrom:
+          - configMapRef:
+              name: rails-env-config
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              httpHeaders:
+                - name: X-Pinger
+                  value: "true"
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: za-app
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: web
+  selector:
+    run: za-app
+

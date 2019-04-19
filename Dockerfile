@@ -10,6 +10,12 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock /app/
 RUN gem install bundler && bundle install
 
+COPY config.ru Rakefile /app/
+ADD config /app/config
+ADD app/assets /app/app/assets
+RUN ls /app/app
+RUN rake assets:precompile
+
 ADD . /app
 
 
