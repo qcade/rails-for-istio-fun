@@ -46,4 +46,20 @@ spec:
     name: web
   selector:
     run: za-app
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: za-app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: "za-app.sfo.mosel.ro"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: za-app
+              servicePort: web
 
