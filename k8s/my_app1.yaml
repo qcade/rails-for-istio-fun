@@ -1,0 +1,85 @@
+---
+apiVersion: v1
+kind: ConfigMap
+data:
+  RAILS_ENV: "production"
+  SECRET_KEY_BASE: "da096d70bd87d7f74447ecf7d29c4e96d598907beb66e2c524df0aba4184e419296309364ffbd10dbb761a46449079a465258f33e6b2848bfbd8116620290423"
+  RAILS_LOG_TO_STDOUT: "true"
+metadata:
+  name: rails-env-config
+  namespace: sample
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: za-app
+  namespace: sample
+  annotations:
+    flux.weave.works/tag.za-app: glob:1.4.*
+    flux.weave.works/automated: 'true'
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        run: za-app
+      annotations:
+        flux.weave.works/automated: "true"
+        flux.weave.works/tag.init: glob:1.4.*
+        flux.weave.works/tag.podinfod: glob:1.4.*
+    spec:
+      containers:
+      - name: za-app
+        image: "itnovate/rails-for-istio-fun:1.4.2"
+        env:
+        - name: RAILS_SERVE_STATIC_FILES
+          value: "true"
+        - name: RAILS_ENV
+          value: "production"
+        envFrom:
+        - configMapRef:
+            name: rails-env-config
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+
+        readinessProbe:
+          httpGet:
+            httpHeaders:
+            - name: X-Pinger
+              value: "true"
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: za-app
+  namespace: sample
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: web
+  selector:
+    run: za-app
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: za-app
+  namespace: sample
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: "za-app.all.mosel.ro"
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: za-app
+          servicePort: web
+
